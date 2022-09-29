@@ -56,10 +56,10 @@ func TestRpcCallOverHttpOk(t *testing.T) {
 
 	rpcClient := &HttpClient{
 		client:   roundtrip,
-		Url:      "https://test.albatross.example",
-		UseAuth:  true,
-		Username: "username",
-		Password: "password",
+		url:      "https://test.albatross.example",
+		useAuth:  true,
+		username: "username",
+		password: "password",
 	}
 
 	mockResponse := `{"jsonrpc":"2.0","data":1234,"id":1}`
@@ -105,10 +105,10 @@ func TestRpcCallOverHttpRPCerror(t *testing.T) {
 
 	rpcClient := &HttpClient{
 		client:   roundtrip,
-		Url:      "https://test.albatross.example",
-		UseAuth:  true,
-		Username: "username",
-		Password: "password",
+		url:      "https://test.albatross.example",
+		useAuth:  true,
+		username: "username",
+		password: "password",
 	}
 
 	mockResponse := `{"jsonrpc":"2.0","error":{"code":-32603,"message":"Internal error","data":"Multiple transactions found: 21cfba017cf06251846eb5085e52a2388b2c4c05bd1b155063358ea63f75ac53"},"id":1}`
