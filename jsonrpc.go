@@ -22,7 +22,7 @@ type JsonRPCRequest struct {
 }
 
 func NewRPCRequest(method string, params ...interface{}) *JsonRPCRequest {
-	return NewRPCRequestWithID(method, time.Now().Unix(), params)
+	return NewRPCRequestWithID(method, time.Now().Unix(), params...)
 }
 
 func NewRPCRequestWithID[T ID](method string, id T, params ...interface{}) *JsonRPCRequest {
