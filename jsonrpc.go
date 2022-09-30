@@ -46,7 +46,7 @@ type JsonRPCResponse struct {
 	Jsonrpc string          `json:"jsonrpc"`
 	Id      any             `json:"id"`
 	Error   *JsonRPCError   `json:"error,omitempty"`
-	Data    json.RawMessage `json:"data,omitempty"`
+	Result  json.RawMessage `json:"result,omitempty"`
 }
 
 func (r *JsonRPCResponse) GetErr() error {
@@ -57,7 +57,7 @@ func (r *JsonRPCResponse) GetErr() error {
 }
 
 func (r *JsonRPCResponse) GetObject() json.RawMessage {
-	return r.Data
+	return r.Result
 }
 
 // JsonRPCError represents a JSON-RPC 2.0 error.

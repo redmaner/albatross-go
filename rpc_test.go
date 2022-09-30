@@ -62,7 +62,7 @@ func TestRpcCallOverHttpOk(t *testing.T) {
 		password: "password",
 	}
 
-	mockResponse := `{"jsonrpc":"2.0","data":1234,"id":1}`
+	mockResponse := `{"jsonrpc":"2.0","result":1234,"id":1}`
 	recorder.WriteString(mockResponse)
 
 	req := NewRPCRequestWithID("getBlockNumber", 1)
