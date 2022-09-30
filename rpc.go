@@ -97,7 +97,7 @@ func (h *HttpClient) Batch(r []*JsonRPCRequest) ([]*JsonRPCResponse, error) {
 }
 
 func (h *HttpClient) send(body io.Reader) (io.ReadCloser, error) {
-	httpRequest, err := http.NewRequest(http.MethodGet, h.url, body)
+	httpRequest, err := http.NewRequest(http.MethodPost, h.url, body)
 	if err != nil {
 		return nil, err
 	}

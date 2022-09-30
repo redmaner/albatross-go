@@ -39,7 +39,7 @@ func TestRpcCallOverHttpOk(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		expectedRawRequest := `{"jsonrpc":"2.0","id":1,"method":"getLatestBlock","Params":[]}`
+		expectedRawRequest := `{"jsonrpc":"2.0","id":1,"method":"getBlockNumber","params":[]}`
 		assert.Equal(t, strings.TrimSpace(string(data)), expectedRawRequest, "Request is invalid")
 
 		expectedAuthHeader := `Basic dXNlcm5hbWU6cGFzc3dvcmQ=`
@@ -65,7 +65,7 @@ func TestRpcCallOverHttpOk(t *testing.T) {
 	mockResponse := `{"jsonrpc":"2.0","data":1234,"id":1}`
 	recorder.WriteString(mockResponse)
 
-	req := NewRPCRequestWithID("getLatestBlock", 1)
+	req := NewRPCRequestWithID("getBlockNumber", 1)
 	resp, err := rpcClient.Call(req)
 	if err != nil {
 		t.Fatal(err)
@@ -88,7 +88,7 @@ func TestRpcCallOverHttpRPCerror(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		expectedRawRequest := `{"jsonrpc":"2.0","id":1,"method":"getTransactionByHash","Params":["21cfba017cf06251846eb5085e52a2388b2c4c05bd1b155063358ea63f75ac53"]}`
+		expectedRawRequest := `{"jsonrpc":"2.0","id":1,"method":"getTransactionByHash","params":["21cfba017cf06251846eb5085e52a2388b2c4c05bd1b155063358ea63f75ac53"]}`
 		assert.Equal(t, strings.TrimSpace(string(data)), expectedRawRequest, "Request is invalid")
 
 		expectedAuthHeader := `Basic dXNlcm5hbWU6cGFzc3dvcmQ=`

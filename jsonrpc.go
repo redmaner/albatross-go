@@ -15,10 +15,10 @@ type ID interface {
 
 // JsonRPCRequest represents a JSON-RPC 2.0 request
 type JsonRPCRequest struct {
-	Jsonrpc string `json:"jsonrpc"`
-	Id      any    `json:"id,omitempty"`
-	Method  string `json:"method"`
-	Params  []interface{}
+	Jsonrpc string        `json:"jsonrpc"`
+	Id      any           `json:"id,omitempty"`
+	Method  string        `json:"method"`
+	Params  []interface{} `json:"params"`
 }
 
 func NewRPCRequest(method string, params ...interface{}) *JsonRPCRequest {
