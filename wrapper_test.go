@@ -9,7 +9,7 @@ import (
 
 var _ JsonUnwrapper = (*Objector)(nil)
 
-// Objector is a type used to test the ObjectRetriever interface
+// Objector is a type used to test the JsonUnwrapper interface
 type Objector struct {
 	Obj json.RawMessage
 	Err error
@@ -21,7 +21,7 @@ func (o *Objector) GetErr() error { return o.Err }
 
 func TestAssertionOk(t *testing.T) {
 	obj := &Objector{Err: nil, Obj: []byte("10")}
-	retrieved, err := GetObject[int](obj)
+	retrieved, err := UnwrapObject[int](obj)
 	if err != nil {
 		t.Fatalf("Could not retrieve object as int")
 	}
@@ -30,7 +30,7 @@ func TestAssertionOk(t *testing.T) {
 
 func TestUnmarshallnOk(t *testing.T) {
 	obj := &Objector{Err: nil, Obj: []byte("10")}
-	retrieved, err := GetObject[int](obj)
+	retrieved, err := UnwrapObject[int](obj)
 	if err != nil {
 		t.Fatalf("Could not retrieve object as int: %s", err)
 	}
@@ -39,7 +39,7 @@ func TestUnmarshallnOk(t *testing.T) {
 
 func TestUnmarshallError(t *testing.T) {
 	obj := &Objector{Err: nil, Obj: []byte(`{"value":10}`)}
-	_, err := GetObject[int](obj)
+	_, err := UnwrapObject[int](obj)
 	if err == nil {
 		t.Fatalf("Test should fail to cast an object to an int")
 	}

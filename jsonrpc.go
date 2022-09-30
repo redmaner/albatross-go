@@ -41,7 +41,7 @@ func NewRPCRequestWithID[T ID](method string, id T, params ...interface{}) *Json
 
 // JsonRPCResponse represents a JSON-RPC 2.0 response
 // Data is unmarshalled as `json.RawMessage` type and can be further
-// unmarshalled with the `GetObject` function
+// unmarshalled with the `UnwrapObject` function
 type JsonRPCResponse struct {
 	Jsonrpc string          `json:"jsonrpc"`
 	Id      any             `json:"id"`

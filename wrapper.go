@@ -11,12 +11,12 @@ type JsonUnwrapper interface {
 	GetObject() json.RawMessage
 }
 
-// GetObject is a generic function that takes a type of ObjectRetriever
+// UnwrapObject is a generic function that takes a type of JsonUnwrapper
 // and returns the object in the desired type.
 //
 // This function will first attempt to assert the object to the desired type.
 // If this fails it will attempt to decode the object as JSON data to the desired type.
-func GetObject[T any](obj JsonUnwrapper) (T, error) {
+func UnwrapObject[T any](obj JsonUnwrapper) (T, error) {
 	var data T
 	if err := obj.GetErr(); err != nil {
 		return data, err

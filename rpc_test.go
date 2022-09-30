@@ -71,7 +71,7 @@ func TestRpcCallOverHttpOk(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	blockNumber, err := GetObject[int](resp)
+	blockNumber, err := UnwrapObject[int](resp)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,7 +120,7 @@ func TestRpcCallOverHttpRPCerror(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = GetObject[string](resp)
+	_, err = UnwrapObject[string](resp)
 	expectedErr := `JSON-RPC Error -32603 - Internal error. Error data: Multiple transactions found: 21cfba017cf06251846eb5085e52a2388b2c4c05bd1b155063358ea63f75ac53`
 	assert.Equal(t, err.Error(), expectedErr, "Returned error is invalid")
 }
