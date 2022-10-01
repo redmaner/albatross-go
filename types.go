@@ -43,17 +43,20 @@ func (n *NIM) ToLuna() (Luna, error) {
 	return FormatLuna(*n)
 }
 
+var _ JsonUnwrapper = (*Block)(nil)
+
 // Block represents a block on the Nimiq 2.0 blockchain
 type Block struct {
-	Number    int   `json:"number"`
-	Epoch     int   `json:"epoch"`
-	Batch     int   `json:"batch"`
-	Timestamp int64 `json:"timestamp"`
+	Number     int    `json:"number"`
+	Epoch      int    `json:"epoch"`
+	Batch      int    `json:"batch"`
+	Timestamp  int64  `json:"timestamp"`
+	ParentHash string `json:"parentHash"`
 
 	Type            string `json:"type"`
 	IsElectionBlock bool   `json:"isElectionBlock"`
 
-	ExtraData    []byte          `json:"extraData"`
+	ExtraData    []byte          `json:"extraData"` // Hex encoded data belonging to the block
 	Transactions json.RawMessage `json:"transactions"`
 
 	// Producer is only returned for Micro blocks
@@ -64,6 +67,9 @@ type Block struct {
 	Slots []Slots `json:"slots,omitempty"`
 }
 
+func (b *Block) GetErr() error               { return nil }
+func (b *Block) GetWrapped() json.RawMessage { return b.Transactions }
+
 // Slot represents a slot used to produce a micro block
 type Slot struct {
 	SlotNumber int    `json:"slotNumber"`
@@ -71,11 +77,29 @@ type Slot struct {
 	PublicKey  string `json:"publicKey"`
 }
 
+// Slots contain the distribution of slots for a next epoch for a particular validator
 type Slots struct {
 	FirstSlotNumber int    `json:"FirstSlotNumber"`
 	NumSlots        int    `json:"numSlots"`
 	Validator       string `json:"validator"`
 	PublicKey       string `json:"publicKey"`
+}
+
+// Transaction contains information on a transaction in the Nimiq blockchain
+type Transaction struct {
+	Hash          string `json:"hash"`
+	BlockNumber   int    `json:"blockNumber"`
+	Timestamp     int64  `json:"timestamp"`
+	Confirmations int    `json:"confirmations"`
+
+	FromAddress         string `json:"from"`
+	ToAddress           string `json:"to"`
+	Value               Luna   `json:"value"`
+	Fee                 Luna   `json:"fee"`
+	Data                []byte `json:"data"`
+	Flags               int    `json:"flags"`
+	ValidityStartHeight int    `json:"validityStartHeight"`
+	Proof               []byte `json:"proof"`
 }
 
 // Account represents an account on the Nimiq 2.0 blockchain

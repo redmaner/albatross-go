@@ -212,6 +212,40 @@ func (h *HttpClient) GetBlockByHash(hash string, includeFullTransactions ...bool
 	return callAndUnwrapToPointer[Block](h, req)
 }
 
+// GetTransactionByHash retrieves transaction by given hash
+func (h *HttpClient) GetTransactionByHash(hash string) (*Transaction, error) {
+	req := NewRPCRequest("getTransactionByHash", hash)
+
+	return callAndUnwrapToPointer[]()[Transaction](h, req)
+}
+
+// GetTransactionByBlockNumber retrieves all transaction in the given block
+func (h *HttpClient) GetTransactionsByBlockNumber(blockNumber int) ([]*Transaction, error) {
+	req := NewRPCRequest("getTransactionByBlockNumber", blockNumber)
+
+	return callAndUnwrap[[]*Transaction](h, req)
+}
+
+// GetTransactionHashesByAddress retrieves all transaction hashes for a given account
+// Optionally max can be provided to limit the amount of returned hashes, default is 100. 
+func (h *HttpClient) GetTransactionHashesByAddress(address string, max ...int) ([]string, error) {
+	params := []interface{}{address}
+	params = addOptionalParam(params, max, 100)
+	req := NewRPCRequest("getTransactionHashesByAddress", params...)
+
+	return callAndUnwrap[[]string](h, req)
+}
+
+// GetTransactionsByAddress retrieves all transactions for a given account
+// Optionally max can be provided to limit the amount of returned transactions, default is 100. 
+func (h *HttpClient) GetTransactionsByAddress(address string, max ...int) ([]*Transaction, error) {
+	params := []interface{}{address}
+	params = addOptionalParam(params, max, 100)
+	req := NewRPCRequest("getTransactionsByAddress", params...)
+
+	return callAndUnwrap[[]*Transaction](h, req)
+}
+
 // GetAccountByAddress returns the desired account by address
 func (h *HttpClient) GetAccountByAddress(address string) (*Account, error) {
 	req := NewRPCRequest("getAccountByAddress", address)
