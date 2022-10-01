@@ -8,21 +8,18 @@ import (
 // composed in another type
 type JsonUnwrapper interface {
 	GetErr() error
-	GetObject() json.RawMessage
+	GetWrapped() json.RawMessage
 }
 
 // UnwrapObject is a generic function that takes a type of JsonUnwrapper
-// and returns the object in the desired type.
-//
-// This function will first attempt to assert the object to the desired type.
-// If this fails it will attempt to decode the object as JSON data to the desired type.
+// and returns the wrapped object in the desired type.
 func UnwrapObject[T any](obj JsonUnwrapper) (T, error) {
 	var data T
 	if err := obj.GetErr(); err != nil {
 		return data, err
 	}
 
-	rawJson := obj.GetObject()
+	rawJson := obj.GetWrapped()
 	err := json.Unmarshal(rawJson, &data)
 	return data, err
 }

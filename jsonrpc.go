@@ -56,7 +56,7 @@ func (r *JsonRPCResponse) GetErr() error {
 	return r.Error
 }
 
-func (r *JsonRPCResponse) GetObject() json.RawMessage {
+func (r *JsonRPCResponse) GetWrapped() json.RawMessage {
 	return r.Result
 }
 

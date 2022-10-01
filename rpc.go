@@ -11,6 +11,40 @@ import (
 	"net/http"
 )
 
+var _ rpcClient = (*HttpClient)(nil)
+
+type rpcClient interface {
+	Call(*JsonRPCRequest) (*JsonRPCResponse, error)
+}
+
+func callAndConfirm(client rpcClient, req *JsonRPCRequest) error {
+	_, err := client.Call(req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func callAndUnwrap[T any](client rpcClient, req *JsonRPCRequest) (T, error) {
+	rpcResp, err := client.Call(req)
+	if err != nil {
+		var emptyReturn T
+		return emptyReturn, err
+	}
+
+	return UnwrapObject[T](rpcResp)
+}
+
+func callAndUnwrapToPointer[T any](client rpcClient, req *JsonRPCRequest) (*T, error) {
+	data, err := callAndUnwrap[T](client, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &data, nil
+}
+
 type HttpClient struct {
 	client http.RoundTripper
 
@@ -73,7 +107,7 @@ func (h *HttpClient) Call(r *JsonRPCRequest) (*JsonRPCResponse, error) {
 }
 
 // Batch executes a batch remote procedure call (RPC) using the given slice of requests
-// Remember that according to the JSON-RPC spec the responses might be returned different order
+// Remember that according to the JSON-RPC spec the responses might be returned in a different order
 // than the order in which the requests are provided.
 func (h *HttpClient) Batch(r []*JsonRPCRequest) ([]*JsonRPCResponse, error) {
 	buf := bytes.NewBufferString("")
@@ -134,36 +168,21 @@ func (h *HttpClient) setAuthHeader(r *http.Request) {
 func (h *HttpClient) GetBlockNumber() (blockNumber int, err error) {
 	req := NewRPCRequest("getBlockNumber")
 
-	rpcResp, err := h.Call(req)
-	if err != nil {
-		return 0, err
-	}
-
-	return UnwrapObject[int](rpcResp)
+	return callAndUnwrap[int](h, req)
 }
 
 // GetBathhNumber retrieves the latest batch number of the blockchain
 func (h *HttpClient) GetBatchNumber() (batchNumber int, err error) {
 	req := NewRPCRequest("getBatchNumber")
 
-	rpcResp, err := h.Call(req)
-	if err != nil {
-		return 0, err
-	}
-
-	return UnwrapObject[int](rpcResp)
+	return callAndUnwrap[int](h, req)
 }
 
 // GetEpochNumber retrieves the latest epoch number of the blockchain
 func (h *HttpClient) GetEpochNumber() (epochNumber int, err error) {
 	req := NewRPCRequest("getEpochNumber")
 
-	rpcResp, err := h.Call(req)
-	if err != nil {
-		return 0, err
-	}
-
-	return UnwrapObject[int](rpcResp)
+	return callAndUnwrap[int](h, req)
 }
 
 // GetLatestBlock returns the latest block
@@ -172,17 +191,7 @@ func (h *HttpClient) GetLatestBlock(includeFullTransactions ...bool) (*Block, er
 	params = addOptionalParam(params, includeFullTransactions, false)
 	req := NewRPCRequest("getLatestBlock", params...)
 
-	rpcResp, err := h.Call(req)
-	if err != nil {
-		return nil, err
-	}
-
-	block, err := UnwrapObject[Block](rpcResp)
-	if err != nil {
-		return nil, err
-	}
-
-	return &block, nil
+	return callAndUnwrapToPointer[Block](h, req)
 }
 
 // GetBlockByNumber retrieves the desired block by number
@@ -191,17 +200,7 @@ func (h *HttpClient) GetBlockByNumber(number int, includeFullTransactions ...boo
 	params = addOptionalParam(params, includeFullTransactions, false)
 	req := NewRPCRequest("getBlockByNumber", params...)
 
-	rpcResp, err := h.Call(req)
-	if err != nil {
-		return nil, err
-	}
-
-	block, err := UnwrapObject[Block](rpcResp)
-	if err != nil {
-		return nil, err
-	}
-
-	return &block, nil
+	return callAndUnwrapToPointer[Block](h, req)
 }
 
 // GetBlockByHash retrieves the desired block by hash
@@ -210,33 +209,14 @@ func (h *HttpClient) GetBlockByHash(hash string, includeFullTransactions ...bool
 	params = addOptionalParam(params, includeFullTransactions, false)
 	req := NewRPCRequest("getBlockByHash", params...)
 
-	rpcResp, err := h.Call(req)
-	if err != nil {
-		return nil, err
-	}
-
-	block, err := UnwrapObject[Block](rpcResp)
-	if err != nil {
-		return nil, err
-	}
-
-	return &block, nil
+	return callAndUnwrapToPointer[Block](h, req)
 }
 
 // GetAccountByAddress returns the desired account by address
 func (h *HttpClient) GetAccountByAddress(address string) (*Account, error) {
 	req := NewRPCRequest("getAccountByAddress", address)
-	rpcResp, err := h.Call(req)
-	if err != nil {
-		return nil, err
-	}
 
-	account, err := UnwrapObject[Account](rpcResp)
-	if err != nil {
-		return nil, err
-	}
-
-	return &account, nil
+	return callAndUnwrapToPointer[Account](h, req)
 }
 
 // CreateAccount creates a new basic account on the Nimiq blockchain
@@ -244,17 +224,8 @@ func (h *HttpClient) CreateAccount(passphrase ...string) (*ReturnAccount, error)
 	params := addOptionalParam[string, interface{}]([]interface{}{}, passphrase, nil)
 
 	req := NewRPCRequest("createAccount", params...)
-	rpcResp, err := h.Call(req)
-	if err != nil {
-		return nil, err
-	}
 
-	account, err := UnwrapObject[ReturnAccount](rpcResp)
-	if err != nil {
-		return nil, err
-	}
-
-	return &account, nil
+	return callAndUnwrapToPointer[ReturnAccount](h, req)
 }
 
 // ImportAccountByRawKey import account on the node using the account's private key
@@ -263,30 +234,22 @@ func (h *HttpClient) ImportAccountByRawKey(rawKey string, passphrase ...string) 
 	params = addOptionalParam[string, interface{}](params, passphrase, nil)
 
 	req := NewRPCRequest("importRawKey", params...)
-	if _, err := h.Call(req); err != nil {
-		return err
-	}
-	return nil
+
+	return callAndConfirm(h, req)
 }
 
 // IsAccountImported returns whether the account is imported on the node
 func (h *HttpClient) IsAccountImported(address string) (bool, error) {
 	req := NewRPCRequest("isAccountImported", address)
-	rpcResp, err := h.Call(req)
-	if err != nil {
-		return false, err
-	}
 
-	return UnwrapObject[bool](rpcResp)
+	return callAndUnwrap[bool](h, req)
 }
 
 // LockAccount locks the given account on the node
 func (h *HttpClient) LockAccount(address string) error {
 	req := NewRPCRequest("lockAccount", address)
-	if _, err := h.Call(req); err != nil {
-		return err
-	}
-	return nil
+
+	return callAndConfirm(h, req)
 }
 
 // UnlockAccount unlocks the given account on the node
@@ -296,19 +259,13 @@ func (h *HttpClient) UnlockAccount(address string, passphrase ...string) error {
 	params = append(params, nil) // Param for duration, which is currently not supported by the server
 
 	req := NewRPCRequest("unlockAccount", params...)
-	if _, err := h.Call(req); err != nil {
-		return err
-	}
-	return nil
+
+	return callAndConfirm(h, req)
 }
 
 // IsAccountImported returns whether the account is imported on the node
 func (h *HttpClient) IsAccountUnlocked(address string) (bool, error) {
 	req := NewRPCRequest("isAccountUnlocked", address)
-	rpcResp, err := h.Call(req)
-	if err != nil {
-		return false, err
-	}
 
-	return UnwrapObject[bool](rpcResp)
+	return callAndUnwrap[bool](h, req)
 }

@@ -15,7 +15,7 @@ type Objector struct {
 	Err error
 }
 
-func (o *Objector) GetObject() json.RawMessage { return o.Obj }
+func (o *Objector) GetWrapped() json.RawMessage { return o.Obj }
 
 func (o *Objector) GetErr() error { return o.Err }
 
