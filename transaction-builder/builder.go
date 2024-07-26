@@ -7,12 +7,19 @@ import (
 	"fmt"
 
 	"github.com/redmaner/albatross-go/types"
-	"golang.org/x/crypto/blake2b"
+)
+
+type TxType byte
+
+const (
+	TxTypeBasic TxType = iota
+	TxTypeExtended
 )
 
 type Builder struct {
 	types.Transaction
 	isValid   bool
+	txType    TxType
 	signature []byte
 	publicKey ed25519.PublicKey
 }
@@ -22,8 +29,9 @@ func (b *Builder) BasicTransaction(
 	recipient types.Address,
 	value, fee types.Coin,
 	network types.NetworkId,
-	validityStartHeight types.ValidityStartHeight,
+	validityStartHeight types.Uint32,
 ) *Builder {
+	b.txType = TxTypeBasic
 	b.isValid = true
 	b.Sender = sender
 	b.Recipient = recipient
@@ -35,78 +43,71 @@ func (b *Builder) BasicTransaction(
 	return b
 }
 
-func (b *Builder) Sign(keypair ed25519.PrivateKey) error {
+func (b *Builder) Sign(keypair ed25519.PrivateKey) (err error) {
 
 	if !b.isValid {
 		return fmt.Errorf("invalid tx")
 	}
 
-	// TODO:
-	// double check signature generation
-	// highly doubt this will work
-	hasher, err := blake2b.New256(nil)
-	if err != nil {
+	buf := bytes.NewBuffer(nil)
+	if _, err = buf.Write(types.Uint16FromInt(len(b.RecipientData)).AsBytes()); err != nil {
 		return err
 	}
 
-	if _, err = hasher.Write([]byte{uint8(len(b.RecipientData))}); err != nil {
+	if _, err = buf.Write(b.RecipientData); err != nil {
 		return err
 	}
 
-	if _, err = hasher.Write(b.RecipientData); err != nil {
+	if _, err := buf.Write(b.Sender[:]); err != nil {
 		return err
 	}
 
-	if _, err := hasher.Write(b.Sender[:]); err != nil {
+	if _, err := buf.Write(b.SenderType.AsBytes()); err != nil {
 		return err
 	}
 
-	if _, err := hasher.Write(b.SenderType.AsBytes()); err != nil {
+	if _, err := buf.Write(b.Recipient[:]); err != nil {
 		return err
 	}
 
-	if _, err := hasher.Write(b.Recipient[:]); err != nil {
+	if _, err := buf.Write(b.RecipientType.AsBytes()); err != nil {
 		return err
 	}
 
-	if _, err := hasher.Write(b.RecipientType.AsBytes()); err != nil {
+	if _, err := buf.Write(b.Value.AsBytes()); err != nil {
 		return err
 	}
 
-	if _, err := hasher.Write(b.Value.AsBytes()); err != nil {
+	if _, err := buf.Write(b.Fee.AsBytes()); err != nil {
 		return err
 	}
 
-	if _, err := hasher.Write(b.Fee.AsBytes()); err != nil {
+	if _, err := buf.Write(b.ValidityStartHeight.AsBytes()); err != nil {
 		return err
 	}
 
-	if _, err := hasher.Write(b.ValidityStartHeight.AsBytes()); err != nil {
+	if _, err := buf.Write(b.NetworkId.AsBytes()); err != nil {
 		return err
 	}
 
-	if _, err := hasher.Write(b.NetworkId.AsBytes()); err != nil {
+	if _, err := buf.Write(b.Flags.AsBytes()); err != nil {
 		return err
 	}
 
-	if _, err := hasher.Write(b.Flags.AsBytes()); err != nil {
+	if _, err := buf.Write(types.VarintFromInt(len(b.SenderData)).AsBytes()); err != nil {
 		return err
 	}
 
-	if b.NetworkId.IsAlbatross() {
-		if _, err := hasher.Write(b.SenderData); err != nil {
-			return err
-		}
+	if _, err := buf.Write(b.SenderData); err != nil {
+		return err
 	}
 
-	payload := hasher.Sum(nil)
-
-	b.signature = ed25519.Sign(keypair, payload)
+	b.signature = ed25519.Sign(keypair, buf.Bytes())
 	b.publicKey = keypair.Public().(ed25519.PublicKey)
 	return nil
 }
 
-func (b *Builder) ToHex() (string, error) {
+func (b *Builder) Encode() (string, error) {
 	if !b.isValid {
 		return "", fmt.Errorf("invalid tx")
 	}
@@ -115,10 +116,20 @@ func (b *Builder) ToHex() (string, error) {
 		return "", fmt.Errorf("transaction is not signed")
 	}
 
+	switch b.txType {
+	case TxTypeBasic:
+		return b.encodeBasic()
+	}
+
+	return "", fmt.Errorf("unsupported tx type")
+}
+
+func (b *Builder) encodeBasic() (string, error) {
 	buf := bytes.NewBuffer(nil)
 
-	// TODO: break out encoding based on Basic or Extended.
-	// currently we only do basic
+	if err := buf.WriteByte(byte(b.txType)); err != nil {
+		return "", err
+	}
 
 	// TODO Webauth is not supported as of yet
 	// signatureType is hardcoded to ed25519

@@ -5,7 +5,7 @@ import "encoding/binary"
 type Coin uint64
 
 func (c Coin) AsBytes() []byte {
-	var valueBuf []byte
-	binary.AppendUvarint(valueBuf, uint64(c))
-	return valueBuf
+	var buf [8]byte
+	binary.BigEndian.PutUint64(buf[:], uint64(c))
+	return buf[:]
 }
