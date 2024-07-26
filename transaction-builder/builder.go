@@ -174,6 +174,10 @@ func (b *Builder) encodeExtended() (string, error) {
 		return "", err
 	}
 
+	if _, err := buf.Write(types.Varint(len(b.SenderData)).AsBytes()); err != nil {
+		return "", err
+	}
+
 	if _, err := buf.Write(b.SenderData); err != nil {
 		return "", err
 	}
@@ -183,6 +187,10 @@ func (b *Builder) encodeExtended() (string, error) {
 	}
 
 	if _, err := buf.Write(b.RecipientType.AsBytes()); err != nil {
+		return "", err
+	}
+
+	if _, err := buf.Write(types.Varint(len(b.RecipientData)).AsBytes()); err != nil {
 		return "", err
 	}
 
@@ -210,9 +218,44 @@ func (b *Builder) encodeExtended() (string, error) {
 		return "", err
 	}
 
-	if _, err := buf.Write(b.signature); err != nil {
+	proof, err := b.encodeProof()
+	if err != nil {
+		return "", err
+	}
+
+	if _, err := buf.Write(proof); err != nil {
 		return "", err
 	}
 
 	return hex.EncodeToString(buf.Bytes()), nil
+}
+
+func (b *Builder) encodeProof() ([]byte, error) {
+	buf := bytes.NewBuffer(nil)
+
+	// TODO Webauth is not supported as of yet
+	// signatureType is hardcoded to ed25519
+	var signatureType uint8 = 0
+	var flag uint8 = 0
+	signatureType |= flag << 4
+
+	if err := buf.WriteByte(signatureType); err != nil {
+		return nil, err
+	}
+
+	if _, err := buf.Write(b.publicKey); err != nil {
+		return nil, err
+	}
+
+	// merkle path, we don't have that
+	if err := buf.WriteByte(0); err != nil {
+		return nil, err
+	}
+
+	if _, err := buf.Write(b.signature); err != nil {
+		return nil, err
+	}
+
+	// should this be hex encoded first?
+	return buf.Bytes(), nil
 }
