@@ -174,7 +174,7 @@ func (b *Builder) encodeExtended() (string, error) {
 		return "", err
 	}
 
-	if _, err := buf.Write(types.Varint(len(b.SenderData)).AsBytes()); err != nil {
+	if _, err := buf.Write(types.VarintFromInt(len(b.SenderData)).AsBytes()); err != nil {
 		return "", err
 	}
 
@@ -190,7 +190,7 @@ func (b *Builder) encodeExtended() (string, error) {
 		return "", err
 	}
 
-	if _, err := buf.Write(types.Varint(len(b.RecipientData)).AsBytes()); err != nil {
+	if _, err := buf.Write(types.VarintFromInt(len(b.RecipientData)).AsBytes()); err != nil {
 		return "", err
 	}
 
