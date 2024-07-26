@@ -223,6 +223,10 @@ func (b *Builder) encodeExtended() (string, error) {
 		return "", err
 	}
 
+	if _, err := buf.Write(types.Varint(len(proof)).AsBytes()); err != nil {
+		return "", err
+	}
+
 	if _, err := buf.Write(proof); err != nil {
 		return "", err
 	}
